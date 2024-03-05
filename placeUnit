@@ -1,0 +1,112 @@
+let placeUnit (manaArray: [[u8]]) (gameState: [[[[i32]]]]) (x: u8) (y: u8) (cardID: u8) (speed: u8) (health: u8) (attack: u8) (range: u8) (flying: bool) (areaEffect: bool) (healing: bool) (originalHealth: u8) (instance: u8) (playerStatiArr: [[i32]]) : ([[[[i32]]]], [[(u8, u8)]], [[(u8, u8, Bool, Bool, Bool)]], [[u8]], [[u8]]) =
+  let isOccupied = gameState[x][y][0] != -1 || gameState[x][y][1] != -1
+
+  if isOccupied
+  then
+    (gameState, [], playerStatiArr, updatedManaArray, manaArray)
+  else
+    let (paySuccess, updatedManaArray) = payMana manaArray health 8 0
+
+    if paySuccess
+    then
+      let updatedGameState =
+            map (\row ->
+                   map (\cell ->
+                          let attrs = cell
+                          in if attrs[0] == -1 || (attrs[0] == -1 && attrs[1] == -1)
+                             then if attrs[7] == instance
+                                  then [speed, health, attack, range, if flying then 1 else 0, if areaEffect then 1 else 0, if healing then 1 else 0, originalHealth, cardID, instance]
+                                  else attrs
+                             else attrs)
+                       row)
+                gameState
+
+      in (updatedGameState, [], [(cardID, instance, False, False, False)], updatedManaArray, manaArray)
+    else
+      (gameState, [], playerStatiArr, updatedManaArray, manaArray)
+
+
+let payMana (manaArray: [[u8]]) (colorCost: u8) (colorIndex: u8) (neutralCost: u8) (chromeSpent: bool) =
+  let colorMana = manaArray[0][colorIndex]
+  let neutralMana = manaArray[0][4]
+
+  if neutralMana >= neutralCost && (colorMana >= colorCost || neutralMana >= colorCost) then
+    let colorCostDiff = if chromeSpent then colorCost - 1 else colorCost
+    let updatedColorMana = colorMana - min colorCostDiff colorCost
+    let updatedNeutralMana = neutralMana - min neutralCost colorCost
+
+    let updatedManaArray = map (\i ->
+                                  if i == colorIndex then updatedColorMana
+                                  else if i == 4 then updatedNeutralMana
+                                  else manaArray[0][i]) (iota (length manaArray[0]))
+
+    let updatedSecondColumn = map (\i ->
+                                     if i == colorIndex then manaArray[1][i] + min colorCostDiff colorCost
+                                     else if i == 4 then manaArray[1][i] + min neutralCost colorCost
+                                     else manaArray[1][i]) (iota (length manaArray[1]))
+
+    let (_, _, _, _, _, _, _, _, _, chromeSpent) = payNeutralMana updatedManaArray colorIndex colorCost neutralCost colorIndex chromeSpent
+    in
+      (true, updatedManaArray)
+  else
+    (false, manaArray)
+
+
+let payNeutralMana (manaArray: [[u8]]) (colorIndex: u8) (colorCost: u8) (neutralCost: u8) (chosenColorIndex: u8) (chromeSpent: bool) =
+  let origColorMana =
+    if manaArray[0][colorIndex] >= colorCost
+    then manaArray[0][colorIndex] - colorCost
+    else 0
+
+  if colorIndex == chosenColorIndex
+  then
+    let newManaArray =
+      if chromeSpent
+      then update2d manaArray [(0, colorIndex) := origColorMana, (0, 5) := manaArray[0][5] - 1]
+      else update2d manaArray [(0, colorIndex) := origColorMana]
+    in newManaArray
+  else
+    let chosenColorMana = manaArray[0][chosenColorIndex]
+    let remainingCost = neutralCost - origColorMana
+
+    let updatedColorMana =
+      if chosenColorMana >= remainingCost
+      then origColorMana + remainingCost
+      else origColorMana + chosenColorMana
+
+    let newChosenColorMana =
+      if chosenColorMana >= remainingCost
+      then chosenColorMana - remainingCost
+      else 0
+
+    let newManaArray =
+      update2d manaArray [(0, colorIndex) := 0, (0, chosenColorIndex) := newChosenColorMana]
+    in newManaArray
+
+
+if colorIndex == chosenColorIndex
+then
+let newManaArray =
+if chromeSpent
+then update2d manaArray [(0, colorIndex) := origColorMana, (0, 5) := manaArray[0][5] - 1]
+else update2d manaArray [(0, colorIndex) := origColorMana]
+
+in newManaArray
+else
+let chosenColorMana = manaArray[0][chosenColorIndex]
+let remainingCost = neutralCost - origColorMana
+
+let updatedColorMana =
+if chosenColorMana >= remainingCost
+then origColorMana + remainingCost
+else origColorMana + chosenColorMana
+
+let newChosenColorMana =
+if chosenColorMana >= remainingCost
+then chosenColorMana - remainingCost
+else 0
+
+let newManaArray =
+update2d manaArray [(0, colorIndex) := 0, (0, chosenColorIndex) := newChosenColorMana]
+
+in newManaArray
