@@ -8,8 +8,6 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]
         width = 30  -- Updated width for cube coordinates
         height = 22  -- Updated height for cube coordinates
         depth = 22  -- Updated depth for cube coordinates
-        startZ = -(x1 + y1)
-        endZ = -(x2 + y2)
         -- Retrieve unit's status from the playerStatiArray
         currentPlayerStati = playerStatiArray[playerId]
         unitStatus = lookupDefault (cardID, instance, 0, False, False, False) currentPlayerStati
