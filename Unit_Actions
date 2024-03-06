@@ -42,3 +42,38 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]
                                          currentPlayerStati
       in
       (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
+
+let isValidMove : (u8, u8, u8, u8, [[[[u8]]]]) -> u8 =
+\ (startX, startY, endX, endY, gameState) ->
+let width = length gameState
+height = length (gameState[0])
+depth = length (gameState[0][0])
+
+let rec bfs : [(u8, u8, u8)] -> [(u8, u8, u8)] -> u8 =
+\ frontier visited ->
+case frontier of
+[] -> 0 -- No valid path found
+(x, y, z) :: rest ->
+let neighbors = [(x+1, y, z-1), (x+1, y-1, z), (x, y-1, z+1), (x-1, y, z+1), (x-1, y+1, z), (x, y+1, z-1)]
+validNeighbors = filter (\(nx, ny, nz) ->
+0 <= nx && nx < width &&
+0 <= ny && ny < height &&
+0 <= nz && nz < depth &&
+gameState[toIndex nx][toIndex ny][toIndex nz][0] == -1)
+neighbors
+newFrontier = filter (\(nx, ny, nz) -> notElem (nx, ny, nz) visited) validNeighbors
+newVisited = visited ++ newFrontier
+in
+if (x, y, z) == (endX, endY, 0)
+then 1 -- Valid path found
+else bfs rest newVisited
+
+if gameState[toIndex endX][toIndex endY][0] != -1
+then 0 -- Destination space is occupied
+else
+let pathExists = bfs [(endX, endY, 0)] []
+in
+if pathExists == 1 && abs(endX - startX) + abs(endY - startY) <= speed
+then 1 -- Valid path found
+else 0 -- No valid path found
+
