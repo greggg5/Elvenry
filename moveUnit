@@ -1,4 +1,4 @@
-let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]]) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) -> (GameState, [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) =
   \ (gameState, (x1, y1), (x2, y2), playerStatiArray) ->
     let (x1', y1', z1') = coordinateMap (x1, y1)
         (x2', y2', z2') = coordinateMap (x2, y2)
@@ -43,7 +43,7 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]
       in
       (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
 
-let moveUnitA : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]]) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) -> (GameState, [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) =
   \ (gameState, (x1, y1), (x2, y2), playerStatiArray) ->
     let coord1 = coordinateMap (x1, y1)
         coord2 = coordinateMap (x2, y2)
