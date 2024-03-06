@@ -1,4 +1,4 @@
-let attack : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool, Bool]] ) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+let attack : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool, Bool, Bool]] ) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool, Bool)]]) =
   \ (gameState, (attackerX, attackerY), (targetX, targetY), playerStatiArray) ->
     let attacker = gameState[attackerX][attackerY]
         target = gameState[targetX][targetY]
@@ -34,7 +34,7 @@ let isInRange : ((u8, u8), (u8, u8), f32) -> Bool =
     distanceSquared <= range * range
 
 
-let isFriendlyUnit : ((u8, u8), u8, u8, u8, Bool, Bool, Bool) -> [[ (u8, u8), u8, u8, u8, Bool, Bool, Bool]] -> Bool =
+let isFriendlyUnit : ((u8, u8), u8, u8, u8, Bool, Bool, Bool, Bool) -> [[ (u8, u8), u8, u8, u8, Bool, Bool, Bool, Bool]] -> Bool =
   \ (targetCardID, targetInstance) playerStatiArray ->
     any (\(cardID, instance) -> cardID == targetCardID && instance == targetInstance) playerStatiArray
 
@@ -44,7 +44,7 @@ let updateUnit : (unitAttributes, u8) -> unitAttributes =
     then (unit[0], unit[1], newHealth, unit[3], unit[4], unit[5], unit[6], unit[7], unit[8], unit[9])
     else unit
 
-let areaEffectAttack : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool, Bool]] ) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+let areaEffectAttack : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool, Bool, Bool]] ) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool, Bool)]]) =
   \ (gameState, (attackerX, attackerY), (targetX, targetY), playerStatiArray) ->
     let attacker = gameState[attackerX][attackerY]
         target = gameState[targetX][targetY]
