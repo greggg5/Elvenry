@@ -25,3 +25,48 @@ let heal : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool, B
             in updatedGameState
        else gameState
 
+-- Define a helper function to check if the target is within freeze range
+let isInRange : (u8, u8) -> (u8, u8) -> f32 -> Bool =
+  \ (attackerX, attackerY) (targetX, targetY) range ->
+    let dx = f32(targetX) - f32(attackerX)
+        dy = f32(targetY) - f32(attackerY)
+        distanceSquared = dx * dx + dy * dy
+        rangeSquared = range * range
+    in distanceSquared <= rangeSquared
+
+-- Main freeze function
+let freeze : (GameState, (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]], [[(u8, u8, u8, Bool, Bool, Bool)]]) -> GameState =
+  \ (gameState, (freezingX, freezingY), activePlayerStatiArray, enemyPlayerStatiArray) ->
+    let freezingUnit = gameState[freezingX][freezingY]
+        (actionsLeft, _, _, _, _, _, _, _, _, freezed) = freezingUnit
+        freezeRange = freezingUnit[6] -- Index 6 corresponds to freeze range
+
+        -- Check if the freezing unit can perform the freeze action
+        canFreeze = actionsLeft > 0 && not freezed
+
+        -- Find the target's position (you can adapt this based on your gameState structure)
+        targetX = ... -- Extract the target's X coordinate
+        targetY = ... -- Extract the target's Y coordinate
+
+        -- Check if the target is in range
+        targetInRange = isInRange (freezingX, freezingY) (targetX, targetY) freezeRange
+
+        -- Update enemy player status arrays
+        updatedEnemyPlayerStatiArray =
+          if canFreeze && targetInRange
+          then
+            let targetUnit = enemyPlayerStatiArray[targetX][targetY]
+                updatedTargetUnit = [targetUnit[0], 0] ++ targetUnit[2:] -- Set actions left to 0
+            in enemyPlayerStatiArray with [targetX][targetY] = updatedTargetUnit
+          else enemyPlayerStatiArray
+
+        -- Update freezing unit's actions left and set freezed flag
+        updatedFreezingUnit =
+          if canFreeze
+          then [actionsLeft - 1, ...] -- Update other fields as needed
+          else freezingUnit
+
+        -- Update the gameState
+        updatedGameState = gameState with [freezingX][freezingY] = updatedFreezingUnit
+    in
+    updatedGameState
