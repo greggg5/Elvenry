@@ -43,6 +43,13 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]
       in
       (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
 
+
+let coordinateMap : (u8, u8) -> (u8, u8, u8) =
+\ (x, y) ->
+  let z = -(x + y)
+  in (x, y, z)
+
+
 let isValidMove : (u8, u8, u8, u8, [[[[u8]]]]) -> u8 =
 \ (startX, startY, endX, endY, gameState) ->
 let width = length gameState
