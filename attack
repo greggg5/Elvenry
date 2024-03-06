@@ -23,13 +23,16 @@ let attack : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool,
     in
     (updatedGameState, updatedPlayerStatiArray)
 
-let isInRange : (u8, u8) -> (u8, u8) -> u8 -> Bool =
-  \ (attackerX, attackerY) (targetX, targetY) range ->
-    let dx = targetX - attackerX
-        dy = targetY - attackerY
+let isInRange : ((u8, u8), (u8, u8), f32) -> Bool =
+  \ ((attackerX, attackerY), (targetX, targetY), range) ->
+    let (attackerX', attackerY', _) = coordinateMap (attackerX, attackerY)
+        (targetX', targetY', _) = coordinateMap (targetX, targetY)
+        dx = f32(abs(attackerX' - targetX'))
+        dy = f32(abs(attackerY' - targetY'))
         distanceSquared = dx * dx + dy * dy
-        rangeSquared = range * range
-    in distanceSquared <= rangeSquared
+    in
+    distanceSquared <= range * range
+
 
 let isFriendlyUnit : ((u8, u8), u8, u8, u8, Bool, Bool, Bool) -> [[ (u8, u8), u8, u8, u8, Bool, Bool, Bool]] -> Bool =
   \ (targetCardID, targetInstance) playerStatiArray ->
