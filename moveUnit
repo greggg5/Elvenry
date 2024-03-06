@@ -43,19 +43,15 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool,
       in
       (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
 
-let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) -> (GameState, [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) =
+let moveUnitCopilot : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) -> (GameState, [[(u8, u8), u8, Bool, Bool, Bool, Bool]]) =
   \ (gameState, (x1, y1), (x2, y2), playerStatiArray) ->
-    let coord1 = coordinateMap (x1, y1)
-        coord2 = coordinateMap (x2, y2)
-        unitAttrs = gameState[toIndex coord1[0]][toIndex coord1[1]][playerId]
-        (health, attack, speed, range, flying, areaEffect, cardID, instance) =
-          (unitAttrs[0], unitAttrs[1], unitAttrs[2], unitAttrs[3], unitAttrs[4], unitAttrs[5], unitAttrs[6], unitAttrs[7])
-        width = 30  -- Updated width for cube coordinates
+    let width = 30  -- Updated width for cube coordinates
         height = 22  -- Updated height for cube coordinates
         depth = 22  -- Updated depth for cube coordinates
         -- Retrieve unit's status from the playerStatiArray
         currentPlayerStati = playerStatiArray[playerId]
-        unitStatus = lookupDefault (cardID, instance, 0, False, False, False) currentPlayerStati
+        (unitX, unitY) = (x1, y1)  -- Adjusted to match the format of playerStatiArray
+        unitStatus = lookupDefault (unitX, unitY, 0, False, False, False) currentPlayerStati  -- Adjusted to match the format of playerStatiArray
         -- Check if the unit has actions left
         hasActionsLeft = unitStatus[2] > 0
         -- Check if the unit has a half-integer speed and hasn't moved
@@ -65,11 +61,16 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool,
             _ -> true
 
     -- Check if the move is valid and the unit has actions left
-    if isValidMove coord1[0] coord1[1] coord1[2] coord2[0] coord2[1] coord2[2] gameState flying == 0 || not hasActionsLeft || not shouldMove
+    if isValidMove x1 y1 x2 y2 gameState flying == 0 || not hasActionsLeft || not shouldMove
     then
       (gameState, playerStatiArray)  -- Target position is unreachable, or the unit has no actions left, or can't move due to its half-integer speed and having moved
     else
-      let updatedGameState = map (\x ->
+      let coord1 = coordinateMap (x1, y1)
+          coord2 = coordinateMap (x2, y2)
+          unitAttrs = gameState[toIndex coord1[0]][toIndex coord1[1]][playerId]
+          (health, attack, speed, range, flying, areaEffect, cardID, instance) =
+            (unitAttrs[0], unitAttrs[1], unitAttrs[2], unitAttrs[3], unitAttrs[4], unitAttrs[5], unitAttrs[6], unitAttrs[7])
+          updatedGameState = map (\x ->
                                    map (\y ->
                                           map (\z ->
                                                  if (x, y, z) == (coord1[0], coord1[1], coord1[2])
@@ -81,20 +82,17 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool,
                                (iota height))
                             (iota width)
           updatedPlayerStatiArray = map (\unit ->
-                                           if unit == unitStatus
-                                           then (cardID, instance, unit[2] - 1, True, unit[4], unit[5])
+                                           if (unit[0], unit[1]) == (unitX, unitY)  -- Adjusted to match the format of playerStatiArray
+                                           then (unitX, unitY, unit[2] - 1, True, unit[4], unit[5])  -- Adjusted to match the format of playerStatiArray
                                            else unit)
                                          currentPlayerStati
       in
       (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
 
-
-
 let coordinateMap : (u8, u8) -> (u8, u8, u8) =
 \ (x, y) ->
   let z = -(x + y)
   in (x, y, z)
-
 
 let isValidMove : (u8, u8, u8, u8, [[[[u8]]]], Bool) -> u8 =
   \ (startX, startY, endX, endY, gameState, flying) ->
@@ -175,6 +173,52 @@ let moveUnitTwice : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, B
                                          currentPlayerStati
       in
       (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
+
+let moveUnitTwiceCopilot : (GameState, (u8, u8), (u8, u8), [[(u8, u8, u8, Bool, Bool, Bool)]]) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+  \ (gameState, (x1, y1), (x2, y2), playerStatiArray) ->
+    let width = 30  -- Updated width for cube coordinates
+        height = 22  -- Updated height for cube coordinates
+        depth = 22  -- Updated depth for cube coordinates
+        -- Retrieve unit's status from the playerStatiArray
+        currentPlayerStati = playerStatiArray[playerId]
+        unitStatus = lookupDefault (cardID, instance, 0, False, False, False) currentPlayerStati
+        -- Check if the unit has actions left
+        hasActionsLeft = unitStatus[2] == 2
+        -- Check if the unit has a half-integer speed and hasn't moved
+        shouldMove =
+          case speed % 1.0 of
+            0.5 -> not (unitStatus[3])
+            _ -> true
+
+    -- Check if the move is valid and the unit has actions left
+    if isValidMove x1 y1 x2 y2 gameState == 0 || not hasActionsLeft || not shouldMove
+    then
+      (gameState, playerStatiArray)  -- Target position is unreachable, or the unit has no actions left, or can't move due to its half-integer speed and having moved
+    else
+      let coord1 = coordinateMap (x1, y1)
+          coord2 = coordinateMap (x2, y2)
+          unitAttrs = gameState[toIndex coord1[0]][toIndex coord1[1]][playerId]
+          (health, attack, speed, range, flying, areaEffect, cardID, instance) =
+            (unitAttrs[0], unitAttrs[1], unitAttrs[2], unitAttrs[3], unitAttrs[4], unitAttrs[5], unitAttrs[6], unitAttrs[7])
+          updatedGameState = map (\x ->
+                                   map (\y ->
+                                          map (\z ->
+                                                 if (x, y, z) == (coord1[0], coord1[1], coord1[2])
+                                                 then (-1, -1, -1.0, -1.0, False, False, -1, -1)
+                                                 else if (x, y, z) == (coord2[0], coord2[1], coord2[2])
+                                                      then (health, attack, speed, range, flying, areaEffect, cardID, instance)
+                                                      else gameState[x][y][z])
+                                     (iota depth))
+                               (iota height))
+                            (iota width)
+          updatedPlayerStatiArray = map (\unit ->
+                                           if unit == unitStatus
+                                           then (cardID, instance, unit[2] - 1, True, unit[4], unit[5])
+                                           else unit)
+                                         currentPlayerStati
+      in
+      (updatedGameState, updateAt playerStatiArray playerId updatedPlayerStatiArray)
+
 
 
 
