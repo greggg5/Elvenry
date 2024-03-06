@@ -1,1 +1,27 @@
+let heal : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, u8, u8, Bool, Bool, Bool]]) -> GameState =
+  \ (gameState, (healerX, healerY), (targetX, targetY), playerStatiArray) ->
+    let (healerX', healerY', healerZ') = coordinateMap (healerX, healerY)
+        (targetX', targetY', targetZ') = coordinateMap (targetX, targetY)
+        healerHealing = gameState[healerX'][healerY'][healerZ'][2]
+        (targetHealth, _, _, _, _, _, _, originalHealth, _) = gameState[targetX'][targetY'][targetZ']
+        dx = abs(healerX' - targetX')
+        dy = abs(healerY' - targetY')
+        dz = abs(healerZ' - targetZ')
+        isNeighbor = dx <= 1 && dy <= 1 && dz <= 1
+        isInjured = targetHealth < originalHealth
+
+    in if isNeighbor && isInjured
+       then let newTargetHealth = min(originalHealth, targetHealth + healerHealing)
+                updatedUnit = [newTargetHealth] ++ gameState[targetX'][targetY'][targetZ'][1:]
+                updatedGameState = map (\z ->
+                                          map (\y' ->
+                                                 map (\x' ->
+                                                        if (x', y', z') == (targetX', targetY', targetZ')
+                                                        then updatedUnit
+                                                        else gameState[x'][y'][z'])
+                                                     (0 ..< height))
+                                               (0 ..< width))
+                                         (0 ..< depth)
+            in updatedGameState
+       else gameState
 
