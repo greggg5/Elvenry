@@ -1,1 +1,96 @@
+let attack : (GameState, (u8, u8), (u8, u8), [[ (u8, u8), u8, u8, u8, Bool, Bool, Bool]]) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+  \ (gameState, (attackerX, attackerY), (targetX, targetY), playerStatiArray) ->
+    let attacker = gameState[attackerX][attackerY]
+        target = gameState[targetX][targetY]
+        (health, attackPower, range, _, _, _, _) = attacker
+        targetHealth = target[0]
+        dx = targetX - attackerX
+        dy = targetY - attackerY
+        distanceSquared = dx * dx + dy * dy
+        rangeSquared = range * range
+        newTargetHealth = if distanceSquared <= rangeSquared
+                          then max (targetHealth - attackPower) 0
+                          else targetHealth
+        isTargetFriendly = isFriendlyUnit (target[8], target[9]) playerStatiArray
+
+        updatedGameState =
+          if isTargetFriendly
+          then gameState
+          else gameState with [targetX][targetY][0] = updateUnit(target, newTargetHealth)
+
+        updatedPlayerStatiArray = if not isTargetFriendly
+                                  then updatePlayerStati playerStatiArray
+                                  else playerStatiArray
+    in
+    (updatedGameState, updatedPlayerStatiArray)
+
+let isFriendlyUnit : ((u8, u8), u8, u8, u8, Bool, Bool, Bool) -> [[ (u8, u8), u8, u8, u8, Bool, Bool, Bool]] -> Bool =
+  \ (targetCardID, targetInstance) playerStatiArray ->
+    any (\(cardID, instance) -> cardID == targetCardID && instance == targetInstance) playerStatiArray
+
+let updateUnit : (unitAttributes, u8) -> unitAttributes =
+  \ (unit, newHealth) ->
+    if newHealth > 0
+    then (unit[0], unit[1], newHealth, unit[3], unit[4], unit[5], unit[6], unit[7], unit[8], unit[9])
+    else unit
+let areaEffectAttack : (GameState, (u8, u8), (u8, u8), [[ (u8, u8), u8, u8, u8, Bool, Bool, Bool]]) -> (GameState, [[(u8, u8, u8, Bool, Bool, Bool)]]) =
+  \ (gameState, (attackerX, attackerY), (targetX, targetY), playerStatiArray) ->
+    let attacker = gameState[attackerX][attackerY]
+        target = gameState[targetX][targetY]
+        (health, attackPower, range, _, _, _, _) = attacker
+        targetHealth = target[0]
+
+        updateUnit (unit: unitAttributes, newHealth: u8) : unitAttributes =
+          (unit[0], unit[1], newHealth, unit[3], unit[4], unit[5], unit[6], unit[7], unit[8], unit[9])
+
+        -- Check if any of the 4 spaces in the affected area contain an enemy unit
+        hasEnemyInAffectedArea =
+          let targetUnit = gameState[targetX][targetY]
+              unitsInAffectedArea = [targetUnit]
+          in
+          any (\unit -> not (isFriendlyUnit (unit[8], unit[9]) playerStatiArray)) unitsInAffectedArea
+
+        -- Apply damage to the target hex and the 3 spaces behind it if there's an enemy unit in the affected area
+        updatedGameState =
+          if hasEnemyInAffectedArea
+          then
+            let dx = targetX - attackerX
+                dy = targetY - attackerY
+                directionX = if dx < 0 then 1 else if dx > 0 then -1 else 0
+                directionY = if dy < 0 then 1 else if dy > 0 then -1 else 0
+                behind1X = targetX + directionY
+                behind1Y = targetY - directionX
+                behind2X = targetX - directionY
+                behind2Y = targetY + directionX
+                behind3X = targetX + directionX
+                behind3Y = targetY + directionY
+                distanceSquared = dx * dx + dy * dy
+                rangeSquared = range * range
+                newTargetHealth = if distanceSquared <= rangeSquared
+                                  then max (targetHealth - attackPower) 0
+                                  else targetHealth
+                newBehind1Health = if isValidPosition behind1X behind1Y
+                                   then max (gameState[behind1X][behind1Y][0] - attackPower) 0
+                                   else gameState[behind1X][behind1Y][0]
+                newBehind2Health = if isValidPosition behind2X behind2Y
+                                   then max (gameState[behind2X][behind2Y][0] - attackPower) 0
+                                   else gameState[behind2X][behind2Y][0]
+                newBehind3Health = if isValidPosition behind3X behind3Y
+                                   then max (gameState[behind3X][behind3Y][0] - attackPower) 0
+                                   else gameState[behind3X][behind3Y][0]
+            in
+            gameState with [targetX][targetY][0] = updateUnit(target, newTargetHealth)
+                           [behind1X][behind1Y][0] = updateUnit(gameState[behind1X][behind1Y], newBehind1Health)
+                           [behind2X][behind2Y][0] = updateUnit(gameState[behind2X][behind2Y], newBehind2Health)
+                           [behind3X][behind3Y][0] = updateUnit(gameState[behind3X][behind3Y], newBehind3Health)
+          else gameState
+
+        updatedPlayerStatiArray = if hasEnemyInAffectedArea
+                                  then updatePlayerStati playerStatiArray
+                                  else playerStatiArray
+    in
+    (updatedGameState, updatedPlayerStatiArray)
+
+
+
 
