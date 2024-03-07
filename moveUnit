@@ -19,7 +19,7 @@ let moveUnit : (GameState, (u8, u8), (u8, u8), [[(u8, u8), u8, Bool, Bool, Bool,
             0.5 -> not (unitStatus[3])
             _ -> true
 
-    -- Check if the move is valid and the unit has actions left
+    -- Check if the move is valid and the unit has 2 actions left
     if isValidMove x1' y1' z1' x2' y2' z2' gameState flying == 0 || not hasActionsLeft || not shouldMove
     then
       (gameState, playerStatiArray)  -- Target position is unreachable, or the unit has no actions left, or can't move due to its half-integer speed and having moved
